@@ -144,45 +144,45 @@ alldata %>% ggplot(aes(Age_Range, fill = Region)) +
 #### PRINCIPAL COMPONENT ANALYSIS
 
 ## Serve
-servePCAdata <- alldata[, 9:16]
-servePr <- prcomp(servePCAdata, scale = TRUE)
+servePCAdata <- alldata[, 9:16] # All serve related columns
+servePr <- prcomp(servePCAdata[, 3:8], scale = TRUE) # Remove ranking and rating columns for clustering
 servePr
-summary(servePr)
-plot(servePr, type = "l") # 3 clusters
+summary(servePr) # 5 PCs (99%)
+plot(servePr, type = "l") # optimal -> 3 clusters
 biplot(servePr, scale = 0)
 
 # Extract PC scores
 str(servePr)
 servePr$x
-servePCAdata2 <- cbind(servePCAdata, servePr$x[,1:5])
+servePCAdata2 <- cbind(servePCAdata, servePr$x[,1:5]) 
 head(servePCAdata2)
 
 # Correlations between variables and principal components
 cor(servePCAdata2[,1:8], servePCAdata2[,9:13])
 
 ## Return
-returnPCAdata <- alldata[, 18:23]
-returnPr <- prcomp(returnPCAdata, scale = TRUE)
+returnPCAdata <- alldata[, 18:23] # All return related columns
+returnPr <- prcomp(returnPCAdata[, 3:6], scale = TRUE) # Remove ranking and rating columns for clustering
 returnPr
-summary(returnPr)
-plot(returnPr, type = "l") # 2 clusters
+summary(returnPr) # 3 PCs (99%)
+plot(returnPr, type = "l") # optimal -> 2 clusters
 biplot(returnPr, scale = 0)
 
 # Extract PC scores
 str(returnPr)
 returnPr$x
-returnPCAdata2 <- cbind(returnPCAdata, returnPr$x[,1:4])
+returnPCAdata2 <- cbind(returnPCAdata, returnPr$x[,1:3])
 head(returnPCAdata2)
 
 # Correlations between variables and principal components
-cor(returnPCAdata[,1:6], returnPCAdata2[,7:10])
+cor(returnPCAdata[,1:6], returnPCAdata2[,7:9])
 
 ## Pressure
-pressurePCAdata <- alldata[, 25:30]
-pressurePr <- prcomp(pressurePCAdata, scale = TRUE)
+pressurePCAdata <- alldata[, 25:30] # All pressure related columns
+pressurePr <- prcomp(pressurePCAdata[, 3:6], scale = TRUE) # Remove ranking and rating columns for clustering
 pressurePr
-summary(pressurePr)
-plot(pressurePr, type = "l") # 4 clusters
+summary(pressurePr) # 4 PCs (99%)
+plot(pressurePr, type = "l") # optimal -> 3 clusters
 biplot(pressurePr, scale = 0)
 
 # Extract PC scores
@@ -202,23 +202,64 @@ serveK <- kmeans(servePCAdata2[,9:13], 3)
 serveK
 str(serveK)
 plot(servePCAdata, col = serveK$cluster)
+# Analyze clusters
+summary(servePCAdata[serveK$cluster == 1,]) # Worst
+summary(servePCAdata[serveK$cluster == 2,]) # Best
+summary(servePCAdata[serveK$cluster == 3,]) # Middle
+# Serve clusters do not match exactly
 
 ## Return k-means (2 clusters)
-returnK <- kmeans(returnPCAdata2[,7:10], 3)
+returnK <- kmeans(returnPCAdata2[,7:9], 2)
 returnK
 str(returnK)
 plot(returnPCAdata, col = returnK$cluster)
+# Analyze clusters
+summary(returnPCAdata[returnK$cluster == 1,]) # Best
+summary(returnPCAdata[returnK$cluster == 2,]) # Worst
+# Return clusters matches rankings exactly
 
-## Pressure k-means (4 clusters)
-pressureK <- kmeans(pressurePCAdata2[,7:10], 4)
+## Pressure k-means (3 clusters)
+pressureK <- kmeans(pressurePCAdata2[,7:10], 3)
 pressureK
 str(pressureK)
 plot(pressurePCAdata, col = pressureK$cluster)
+# Analyze clusters
+summary(pressurePCAdata[pressureK$cluster == 1,]) # Worst - good at BPs won and deciding set won
+summary(pressurePCAdata[pressureK$cluster == 2,]) # Worst - good at BPs saved and tiebreaks won
+summary(pressurePCAdata[pressureK$cluster == 3,]) # Best
+# Clusters don't divide data very well
+
+## Group of best in everything
+# With pressure
+alldata[serveK$cluster == 2 & returnK$cluster == 1 & pressureK$cluster == 3, 3:4] # 11 results
+# Without pressure
+alldata[serveK$cluster == 2 & returnK$cluster == 1, 3:4] # 12 results
+
+## Group of worst in everything
+alldata[serveK$cluster == 1 & returnK$cluster == 2 & (pressureK$cluster == 1 | pressureK$cluster == 2), 3:4] # 23 results
+# Without pressure
+alldata[serveK$cluster == 1 & returnK$cluster == 2, 3:4] # 28 results
+
+## Great servers with bad returns
+alldata[serveK$cluster == 2 & returnK$cluster == 2, 3:4] # 17 results
+
+## Great returners with bad serves
+alldata[serveK$cluster == 1 & returnK$cluster == 1, 3:4] # 30 results
 
 
 #### LINEAR REGRESSION
 
+## Height VS Service rating
+## How does height affect a player's serve?
+cor(alldata$Height.cms., alldata$Rating) # 0.61 -> medium positive correlation
+height_serveLR <- lm(alldata$Rating ~ alldata$Height.cms.)
 
+## Height VS Return rating
+## How does height affect a player's return?
+cor(alldata$Height.cms., alldata$Rating.1) # -0.38 -> weak negative correlation
+height_returnLR <- lm(alldata$Rating.1 ~ alldata$Height.cms.)
 
-
-
+## First serve % VS Service games won %
+## Does first serve percentage matter in terms of service games won?
+cor(alldata$First_perc, alldata$Games_won_perc) # 0.03 -> no correlation
+fserve_gwonLR <- lm(alldata$Games_won_perc ~ alldata$First_perc)
