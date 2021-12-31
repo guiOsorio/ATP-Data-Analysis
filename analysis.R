@@ -231,20 +231,97 @@ summary(pressurePCAdata[pressureK$cluster == 3,]) # Best
 
 ## Group of best in everything
 # With pressure
-alldata[serveK$cluster == 2 & returnK$cluster == 1 & pressureK$cluster == 3, 3:4] # 11 results
+best <- alldata[serveK$cluster == 2 & returnK$cluster == 1 & pressureK$cluster == 3, 3:4] # 11 results
 # Without pressure
-alldata[serveK$cluster == 2 & returnK$cluster == 1, 3:4] # 12 results
+best_nop <- alldata[serveK$cluster == 2 & returnK$cluster == 1, 3:4] # 12 results
 
 ## Group of worst in everything
-alldata[serveK$cluster == 1 & returnK$cluster == 2 & (pressureK$cluster == 1 | pressureK$cluster == 2), 3:4] # 23 results
+worst <- alldata[serveK$cluster == 1 & returnK$cluster == 2 & (pressureK$cluster == 1 | pressureK$cluster == 2), 3:4] # 23 results
 # Without pressure
-alldata[serveK$cluster == 1 & returnK$cluster == 2, 3:4] # 28 results
+worst_nop <- alldata[serveK$cluster == 1 & returnK$cluster == 2, 3:4] # 28 results
 
 ## Great servers with bad returns
-alldata[serveK$cluster == 2 & returnK$cluster == 2, 3:4] # 17 results
+gserve_breturn <- alldata[serveK$cluster == 2 & returnK$cluster == 2, 3:4] # 17 results
 
 ## Great returners with bad serves
-alldata[serveK$cluster == 1 & returnK$cluster == 1, 3:4] # 30 results
+greturn_bserve <- alldata[serveK$cluster == 1 & returnK$cluster == 1, 3:4] # 30 results
+
+# Add binary variables to represent if the player belongs to each group created
+alldata <-
+  mutate(
+    alldata,
+    Returners = 
+      ifelse(alldata$ATP_Rank %in% greturn_bserve$ATP_Rank, 1, 0),
+    Servers = 
+      ifelse(alldata$ATP_Rank %in% gserve_breturn$ATP_Rank, 1, 0),
+    Worst_allaround =
+      ifelse(alldata$ATP_Rank %in% worst$ATP_Rank, 1, 0),
+    Worst_allaround_nop =
+      ifelse(alldata$ATP_Rank %in% worst_nop$ATP_Rank, 1, 0),
+    Best_allaround =
+      ifelse(alldata$ATP_Rank %in% best$ATP_Rank, 1, 0),
+    Best_allaround_nop =
+      ifelse(alldata$ATP_Rank %in% best_nop$ATP_Rank, 1, 0)
+    )
+
+#### VISUALIZATIONS PART 2
+
+## Returner's distribution by height
+# Bar Plot
+alldata %>%
+  ggplot(aes(Height.cms., fill = factor(Returners))) +
+  geom_bar() +
+  labs(title = "Distribution By Height", subtitle = "Returners count", x = "Height (in cms)", fill = "Returner", tag = "14") +
+  scale_fill_manual(values = c("#000000","#FFFF00"))
+# Percent Stacked Bar Plot
+alldata %>%
+  ggplot(aes(Height.cms., fill = factor(Returners))) +
+  geom_bar(position = "fill") +
+  labs(title = "Distribution By Height", subtitle = "Returners proportion", x = "Height (in cms)", y = "proportion", fill = "Returner", tag = "15") +
+  scale_fill_manual(values = c("#000000","#FFFF00"))
+
+## Server's distribution by height
+# Bar Plot
+alldata %>%
+  ggplot(aes(Height.cms., fill = factor(Servers))) +
+  geom_bar() +
+  labs(title = "Distribution By Height", subtitle = "Servers count", x = "Height (in cms)", fill = "Server", tag = "16") +
+  scale_fill_manual(values = c("#000000","#800080"))
+# Percent Stacked Bar Plot
+alldata %>%
+  ggplot(aes(Height.cms., fill = factor(Servers))) +
+  geom_bar(position = "fill") +
+  labs(title = "Distribution By Height", subtitle = "Servers proportion", x = "Height (in cms)", y = "proportion", fill = "Server", tag = "17") +
+  scale_fill_manual(values = c("#000000","#800080"))
+
+## Best all around distribution by height (no pressure)
+# Bar Plot
+alldata %>%
+  ggplot(aes(Height.cms., fill = factor(Best_allaround_nop))) +
+  geom_bar() +
+  labs(title = "Distribution By Height", subtitle = "Best all around count", x = "Height (in cms)", fill = "Best", tag = "18") +
+  scale_fill_manual(values = c("#000000","#00FF00"))
+# Percent Stacked Bar Plot
+alldata %>%
+  ggplot(aes(Height.cms., fill = factor(Best_allaround_nop))) +
+  geom_bar(position = "fill") +
+  labs(title = "Distribution By Height", subtitle = "Best all around proportion", x = "Height (in cms)", y = "proportion", fill = "Best", tag = "19") +
+  scale_fill_manual(values = c("#000000","#00FF00"))
+
+
+## Worst all around distribution by height (no pressure)
+# Bar Plot
+alldata %>%
+  ggplot(aes(Height.cms., fill = factor(Worst_allaround_nop))) +
+  geom_bar() +
+  labs(title = "Distribution By Height", subtitle = "Worst all around count", x = "Height (in cms)", fill = "Worst", tag = "20") +
+  scale_fill_manual(values = c("#000000", "#FF0000"))
+# Percent Stacked Bar Plot
+alldata %>%
+  ggplot(aes(Height.cms., fill = factor(Worst_allaround_nop))) +
+  geom_bar(position = "fill") +
+  labs(title = "Distribution By Height", subtitle = "Worst all around proportion", x = "Height (in cms)", y = "proportion", fill = "Worst", tag = "21") +
+  scale_fill_manual(values = c("#000000", "#FF0000"))
 
 
 #### LINEAR REGRESSION
@@ -263,3 +340,6 @@ height_returnLR <- lm(alldata$Rating.1 ~ alldata$Height.cms.)
 ## Does first serve percentage matter in terms of service games won?
 cor(alldata$First_perc, alldata$Games_won_perc) # 0.03 -> no correlation
 fserve_gwonLR <- lm(alldata$Games_won_perc ~ alldata$First_perc)
+
+## Can a player's region help predict if they are a server or a returner?
+
