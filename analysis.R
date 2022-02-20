@@ -11,6 +11,7 @@ df_pinfo <- read.csv('player_info.csv')
 df_region <- read.csv('region.csv', fileEncoding="UTF-8-BOM")
 df_serve <- read.csv('serve_stats.csv', fileEncoding="UTF-8-BOM")
 df_return <- read.csv('return_stats.csv', fileEncoding="UTF-8-BOM")
+
 df_pressure <- read.csv('pressure_stats.csv', fileEncoding="UTF-8-BOM")
 
 View(df_pinfo)
@@ -147,25 +148,26 @@ alldata %>% ggplot(aes(Age_Range, fill = Region)) +
 servePCAdata <- alldata[, 9:16] # All serve related columns
 servePr <- prcomp(servePCAdata[, 3:8], scale = TRUE) # Remove ranking and rating columns for clustering
 servePr
-summary(servePr) # 5 PCs (99%)
-plot(servePr, type = "l") # optimal -> 3 clusters
+summary(servePr) # 4 PCs (95%)
+# The PCA successfully reduces the dimensionality of the data
+plot(servePr, type = "l") # optimal -> 4 PCs
 biplot(servePr, scale = 0)
 
 # Extract PC scores
 str(servePr)
 servePr$x
-servePCAdata2 <- cbind(servePCAdata, servePr$x[,1:5]) 
+servePCAdata2 <- cbind(servePCAdata, servePr$x[,1:4]) # Add PCs to the original serve data
 head(servePCAdata2)
 
 # Correlations between variables and principal components
-cor(servePCAdata2[,1:8], servePCAdata2[,9:13])
+cor(servePCAdata[,3:8], servePCAdata2[,9:12])
 
 ## Return
 returnPCAdata <- alldata[, 18:23] # All return related columns
 returnPr <- prcomp(returnPCAdata[, 3:6], scale = TRUE) # Remove ranking and rating columns for clustering
 returnPr
-summary(returnPr) # 3 PCs (99%)
-plot(returnPr, type = "l") # optimal -> 2 clusters
+summary(returnPr) # 3 PCs (95%)
+plot(returnPr, type = "l") # optimal -> 2 PCs, but decided to go with 3 due to 95% threshold
 biplot(returnPr, scale = 0)
 
 # Extract PC scores
@@ -182,7 +184,8 @@ pressurePCAdata <- alldata[, 25:30] # All pressure related columns
 pressurePr <- prcomp(pressurePCAdata[, 3:6], scale = TRUE) # Remove ranking and rating columns for clustering
 pressurePr
 summary(pressurePr) # 4 PCs (99%)
-plot(pressurePr, type = "l") # optimal -> 3 clusters
+# Since the PCA does not successfully reduce the dimensionality of the data, we don't really need it
+plot(pressurePr, type = "l") # optimal -> 3 PCs
 biplot(pressurePr, scale = 0)
 
 # Extract PC scores
@@ -197,8 +200,21 @@ cor(pressurePCAdata[,1:6], pressurePCAdata2[,7:10])
 
 #### CLUSTERING
 
-## Serve k-means (3 clusters)
-serveK <- kmeans(servePCAdata2[,9:13], 3)
+# Checks the optimal number of clusters
+wssplot <- function(data, nc=15, seed=1234)
+{
+  wss <- (nrow(data)-1)*sum(apply(data,2,var))
+  for(i in 2:nc) {
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers = i)$withinss)}
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab="Within groups sum of squares")
+}
+
+## Serve k-means 
+# Optimal # of clusters 
+wssplot(servePCAdata2[,9:12]) # (3 clusters)
+serveK <- kmeans(servePCAdata2[,9:12], 3)
 serveK
 str(serveK)
 plot(servePCAdata, col = serveK$cluster)
@@ -206,28 +222,36 @@ plot(servePCAdata, col = serveK$cluster)
 summary(servePCAdata[serveK$cluster == 1,]) # Worst
 summary(servePCAdata[serveK$cluster == 2,]) # Best
 summary(servePCAdata[serveK$cluster == 3,]) # Middle
-# Serve clusters do not match exactly
+# Serve clusters do not match rankings exactly (confirm this)
 
-## Return k-means (2 clusters)
-returnK <- kmeans(returnPCAdata2[,7:9], 2)
+## Return k-means (3 clusters)
+# Optimal # of clusters 
+wssplot(returnPCAdata2[,7:9])
+returnK <- kmeans(returnPCAdata2[,7:9], 3)
 returnK
 str(returnK)
 plot(returnPCAdata, col = returnK$cluster)
-# Analyze clusters
+# Analyze clusters (REDO ----------- NEW NUMBER OF CLUSTERS)
 summary(returnPCAdata[returnK$cluster == 1,]) # Best
 summary(returnPCAdata[returnK$cluster == 2,]) # Worst
-# Return clusters matches rankings exactly
+summary(returnPCAdata[returnK$cluster == 3,])
+# Return clusters matches rankings exactly (confirm this)
 
-## Pressure k-means (3 clusters)
-pressureK <- kmeans(pressurePCAdata2[,7:10], 3)
+## Pressure k-means (4 clusters)
+# Optimal # of clusters 
+wssplot(pressurePCAdata2[,7:10])
+pressureK <- kmeans(pressurePCAdata2[,7:10], 4)
 pressureK
 str(pressureK)
 plot(pressurePCAdata, col = pressureK$cluster)
-# Analyze clusters
+# Analyze clusters (REDO ----------- NEW NUMBER OF CLUSTERS)
 summary(pressurePCAdata[pressureK$cluster == 1,]) # Worst - good at BPs won and deciding set won
 summary(pressurePCAdata[pressureK$cluster == 2,]) # Worst - good at BPs saved and tiebreaks won
 summary(pressurePCAdata[pressureK$cluster == 3,]) # Best
+summary(pressurePCAdata[pressureK$cluster == 4,])
 # Clusters don't divide data very well
+
+##### REDO EVERYTHING BASED ON NEW NUMBER OF CLUSTERS FOR PRESSURE AND RETURNS
 
 ## Group of best in everything
 # With pressure
