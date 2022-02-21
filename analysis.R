@@ -219,10 +219,10 @@ serveK
 str(serveK)
 plot(servePCAdata, col = serveK$cluster)
 # Analyze clusters
-summary(servePCAdata[serveK$cluster == 1,]) # Worst
-summary(servePCAdata[serveK$cluster == 2,]) # Best
-summary(servePCAdata[serveK$cluster == 3,]) # Middle
-# Serve clusters do not match rankings exactly (confirm this)
+summary(servePCAdata[serveK$cluster == 1,]) # Middle
+summary(servePCAdata[serveK$cluster == 2,]) # Worst
+summary(servePCAdata[serveK$cluster == 3,]) # Best
+# Serve clusters do not match rankings exactly
 
 ## Return k-means (3 clusters)
 # Optimal # of clusters 
@@ -231,11 +231,11 @@ returnK <- kmeans(returnPCAdata2[,7:9], 3)
 returnK
 str(returnK)
 plot(returnPCAdata, col = returnK$cluster)
-# Analyze clusters (REDO ----------- NEW NUMBER OF CLUSTERS)
-summary(returnPCAdata[returnK$cluster == 1,]) # Best
+# Analyze clusters
+summary(returnPCAdata[returnK$cluster == 1,]) # Middle
 summary(returnPCAdata[returnK$cluster == 2,]) # Worst
-summary(returnPCAdata[returnK$cluster == 3,])
-# Return clusters matches rankings exactly (confirm this)
+summary(returnPCAdata[returnK$cluster == 3,]) # Best
+# Return clusters matches rankings exactly
 
 ## Pressure k-means (4 clusters)
 # Optimal # of clusters 
@@ -244,31 +244,36 @@ pressureK <- kmeans(pressurePCAdata2[,7:10], 4)
 pressureK
 str(pressureK)
 plot(pressurePCAdata, col = pressureK$cluster)
-# Analyze clusters (REDO ----------- NEW NUMBER OF CLUSTERS)
-summary(pressurePCAdata[pressureK$cluster == 1,]) # Worst - good at BPs won and deciding set won
-summary(pressurePCAdata[pressureK$cluster == 2,]) # Worst - good at BPs saved and tiebreaks won
-summary(pressurePCAdata[pressureK$cluster == 3,]) # Best
-summary(pressurePCAdata[pressureK$cluster == 4,])
+# Analyze clusters
+summary(pressurePCAdata[pressureK$cluster == 1,]) # Good
+summary(pressurePCAdata[pressureK$cluster == 2,]) # Bad
+summary(pressurePCAdata[pressureK$cluster == 3,]) # Good (best)
+summary(pressurePCAdata[pressureK$cluster == 4,]) # Bad
+# Ranks based on median and average:
+# BPs won - 3, 4, 1, 2 -> 1 and 2 very similar, 3 significantly better
+# BPs saved - 2, 1, 3, 4 -> 1 and 2 very similar, 4 significantly worse
+# Tiebreaks won - 3, 2, 1, 4 -> 1 and 2 similar, 4 extremely worse
+# Deciding set won - 1, 3, 4, 2 -> 3 and 4 similar, 2 extremely worse
 # Clusters don't divide data very well
-
-##### REDO EVERYTHING BASED ON NEW NUMBER OF CLUSTERS FOR PRESSURE AND RETURNS
 
 ## Group of best in everything
 # With pressure
-best <- alldata[serveK$cluster == 2 & returnK$cluster == 1 & pressureK$cluster == 3, 3:4] # 11 results
+best <- alldata[serveK$cluster == 3 & returnK$cluster == 3 & (pressureK$cluster == 1 || pressureK$cluster == 3), 3:4] # 11 results
 # Without pressure
-best_nop <- alldata[serveK$cluster == 2 & returnK$cluster == 1, 3:4] # 12 results
+best_nop <- alldata[serveK$cluster == 3 & returnK$cluster == 3, 3:4] # 11 results
 
 ## Group of worst in everything
-worst <- alldata[serveK$cluster == 1 & returnK$cluster == 2 & (pressureK$cluster == 1 | pressureK$cluster == 2), 3:4] # 23 results
+worst <- alldata[serveK$cluster == 2 & returnK$cluster == 2 & (pressureK$cluster == 2 || pressureK$cluster == 4), 3:4] # 0 results
 # Without pressure
-worst_nop <- alldata[serveK$cluster == 1 & returnK$cluster == 2, 3:4] # 28 results
+worst_nop <- alldata[serveK$cluster == 2 & returnK$cluster == 2, 3:4] # 0 results
 
 ## Great servers with bad returns
-gserve_breturn <- alldata[serveK$cluster == 2 & returnK$cluster == 2, 3:4] # 17 results
+gserve_breturn <- alldata[serveK$cluster == 3 & returnK$cluster == 2, 3:4] # 4 results
 
 ## Great returners with bad serves
-greturn_bserve <- alldata[serveK$cluster == 1 & returnK$cluster == 1, 3:4] # 30 results
+greturn_bserve <- alldata[serveK$cluster == 2 & returnK$cluster == 3, 3:4] # 27 results
+
+##### REDO EVERYTHING BASED ON NEW NUMBER OF CLUSTERS FOR PRESSURE AND RETURNS
 
 # Add binary variables to represent if the player belongs to each group created
 alldata <-
@@ -287,7 +292,7 @@ alldata <-
     Best_allaround_nop =
       ifelse(alldata$ATP_Rank %in% best_nop$ATP_Rank, 1, 0)
     )
-
+View(alldata)
 #### VISUALIZATIONS PART 2
 
 ## Returner's distribution by height
