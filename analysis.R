@@ -247,7 +247,7 @@ plot(pressurePCAdata, col = pressureK$cluster)
 # Analyze clusters
 summary(pressurePCAdata[pressureK$cluster == 1,]) # Good
 summary(pressurePCAdata[pressureK$cluster == 2,]) # Bad
-summary(pressurePCAdata[pressureK$cluster == 3,]) # Good (best)
+summary(pressurePCAdata[pressureK$cluster == 3,]) # Good
 summary(pressurePCAdata[pressureK$cluster == 4,]) # Bad
 # Ranks based on median and average:
 # BPs won - 3, 4, 1, 2 -> 1 and 2 very similar, 3 significantly better
@@ -272,8 +272,6 @@ gserve_breturn <- alldata[serveK$cluster == 3 & returnK$cluster == 2, 3:4] # 4 r
 
 ## Great returners with bad serves
 greturn_bserve <- alldata[serveK$cluster == 2 & returnK$cluster == 3, 3:4] # 27 results
-
-##### REDO EVERYTHING BASED ON NEW NUMBER OF CLUSTERS FOR PRESSURE AND RETURNS
 
 # Add binary variables to represent if the player belongs to each group created
 alldata <-
