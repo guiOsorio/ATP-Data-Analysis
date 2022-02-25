@@ -219,9 +219,9 @@ serveK
 str(serveK)
 plot(servePCAdata, col = serveK$cluster)
 # Analyze clusters
-summary(servePCAdata[serveK$cluster == 1,]) # Middle
+summary(servePCAdata[serveK$cluster == 1,]) # Best
 summary(servePCAdata[serveK$cluster == 2,]) # Worst
-summary(servePCAdata[serveK$cluster == 3,]) # Best
+summary(servePCAdata[serveK$cluster == 3,]) # Middle
 # Serve clusters do not match rankings exactly
 
 ## Return k-means (3 clusters)
@@ -258,9 +258,9 @@ summary(pressurePCAdata[pressureK$cluster == 4,]) # Bad
 
 ## Group of best in everything
 # With pressure
-best <- alldata[serveK$cluster == 3 & returnK$cluster == 3 & (pressureK$cluster == 1 || pressureK$cluster == 3), 3:4] # 11 results
+best <- alldata[serveK$cluster == 1 & returnK$cluster == 3 & (pressureK$cluster == 1 || pressureK$cluster == 3), 3:4] # 11 results
 # Without pressure
-best_nop <- alldata[serveK$cluster == 3 & returnK$cluster == 3, 3:4] # 11 results
+best_nop <- alldata[serveK$cluster == 1 & returnK$cluster == 3, 3:4] # 11 results
 
 ## Group of worst in everything
 worst <- alldata[serveK$cluster == 2 & returnK$cluster == 2 & (pressureK$cluster == 2 || pressureK$cluster == 4), 3:4] # 0 results
@@ -268,10 +268,10 @@ worst <- alldata[serveK$cluster == 2 & returnK$cluster == 2 & (pressureK$cluster
 worst_nop <- alldata[serveK$cluster == 2 & returnK$cluster == 2, 3:4] # 0 results
 
 ## Great servers with bad returns
-gserve_breturn <- alldata[serveK$cluster == 3 & returnK$cluster == 2, 3:4] # 4 results
+gserve_breturn <- alldata[serveK$cluster == 1 & returnK$cluster == 2, 3:4] # 8 results
 
 ## Great returners with bad serves
-greturn_bserve <- alldata[serveK$cluster == 2 & returnK$cluster == 3, 3:4] # 27 results
+greturn_bserve <- alldata[serveK$cluster == 2 & returnK$cluster == 3, 3:4] # 14 results
 
 # Add binary variables to represent if the player belongs to each group created
 alldata <-
@@ -355,18 +355,223 @@ alldata %>%
 
 ## Height VS Service rating
 ## How does height affect a player's serve?
+# Do the variables seem related?
+# Scatter plot of height against service rating
+ggplot(alldata, aes(y=Rating, x=Height.cms.)) +
+  geom_point() +
+  labs(y="Service rating", x="Height (in cms)", title="Height (cms) VS Serve Rating")
+# Correlation between variables
 cor(alldata$Height.cms., alldata$Rating) # 0.61 -> medium positive correlation
-height_serveLR <- lm(alldata$Rating ~ alldata$Height.cms.)
+
+# Linear regression model
+height_serveLR <- lm(Rating ~ Height.cms., data = alldata)
+summary(height_serveLR)
+
+# Does the pattern of points reveal anything that might cause 
+#us to question the assumptions underlying the appropriate 
+#usage of regression analysis in this case?
+# Residual plot
+height_serveLR$residuals
+ggplot(alldata, aes(x=Height.cms., y=height_serveLR$residuals)) +
+  geom_point() +
+  labs(x="Height (in cms)", y="Residuals", title="Residual Plot of Height") +
+  geom_hline(yintercept = 0, color = "red")
+# There are some outliers in the middle
+###### Subset data using filter to eliminate residuals further than 20 from 0?
+
+# Regression equation
+height_serveLR # Service rating = 43.30 + 1.19 * Height (in cms)
+# An increase of 1 cm in a player's height seems to increase the service
+#rating by 1.19
+
+# Confidence intervals
+confint(height_serveLR, level=0.95) # The interval has 95% chance of containing the correct bi
+confint(height_serveLR, level=0.99) # The interval has 99% chance of containing the correct bi
+
+# R^2
+summary(height_serveLR)
+# R^2 = 0.3724 -> height explains 37.24% of variation in service rating
+
+# p-value
+summary(height_serveLR)
+# p-value = 4.47e-13 -> less than 0.05, therefore it is statistically
+#significant. Therefore, height does seem to be meaningful to our
+#linear regression model
+
+# By analyzing the R^2 and p-values, we can conclude that our model
+#would benefit from adding more independent variables to help predict
+#the service rating (because the p-value was low, meaning the
+#independent variable was significant; but the r^2 value was weak)
+
+# Predict values for heights of 170, 180, 190, 200
+heights <- data.frame(Height.cms. <- c(170, 180, 190, 200))
+predict(height_serveLR, heights)
+
+# What are the predicted values for the service rating?
+serverating_predicted <- fitted(height_serveLR)
+alldata$serverating_predicted <- serverating_predicted
+cor(alldata$serverating_predicted, alldata$Rating)
+cor(alldata$serverating_predicted, alldata$Rating)^2 # value of r^2
+
+# Check the fit of the regression line
+ggplot(alldata, aes(x=Height.cms.,y=Rating)) +
+  geom_point() +
+  geom_line(color="red", aes(x=Height.cms., y=serverating_predicted)) +
+  labs(title="Fit of regression line")
+
+
 
 ## Height VS Return rating
 ## How does height affect a player's return?
+
+# Do the variables seem related?
+# Scatter plot of height against return rating
+ggplot(alldata, aes(y=Rating.1,x=Height.cms.)) +
+  geom_point() +
+  labs(y="Return rating", x="Height (in cms)", title="Height (cms) VS Return Rating")
+# Correlation between variables
 cor(alldata$Height.cms., alldata$Rating.1) # -0.38 -> weak negative correlation
-height_returnLR <- lm(alldata$Rating.1 ~ alldata$Height.cms.)
+
+# Linear regression model
+height_returnLR <- lm(Rating.1 ~ Height.cms., data = alldata)
+summary(height_returnLR)
+
+# Does the pattern of points reveal anything that might cause 
+#us to question the assumptions underlying the appropriate 
+#usage of regression analysis in this case?
+# Residual plot
+ggplot(alldata, aes(x=Height.cms., y=height_returnLR$residuals)) +
+  geom_point() +
+  geom_hline(yintercept=0,color="red") +
+  labs(x="Height (in cms)", y="Residuals", title="Residual plot")
+# Some outliers in the middle
+###### Subset data using filter to eliminate residuals further than 20 from 0?
+
+# Regression equation
+height_returnLR # Service rating = 257.88 - 0.63 * Height (in cms)
+# An increase of 1 cm in a player's height seems to decrease the return
+#rating by 0.63
+
+# Confidence intervals
+confint(height_returnLR, level=0.95) # The interval has 95% chance of containing the correct bi
+confint(height_returnLR, level=0.99) # The interval has 99% chance of containing the correct bi
+
+# R^2
+summary(height_returnLR)
+# R^2 = 0.1436 -> height explains 14.36% of variation in service rating
+
+# p-value
+summary(height_serveLR)
+# p-value = 2.97e-05 -> less than 0.05, therefore it is statistically
+#significant. Therefore, height does seem to be meaningful to our
+#linear regression model
+
+# The p-value and r^2 results tell us that, although height plays a
+#role in predicting the return rating, we need more statistically
+#significant independent variables to predict the return rating
+
+# Predict values for heights of 170, 180, 190, 200
+heights_2 <- data.frame(Height.cms. <- c(170, 180, 190, 200))
+predict(height_returnLR, heights_2)
+
+# What are the predicted values for the return rating?
+returnrating_predicted <- fitted(height_returnLR)
+alldata$returnrating_predicted <- returnrating_predicted
+cor(alldata$returnrating_predicted, alldata$Rating.1)
+cor(alldata$returnrating_predicted, alldata$Rating.1)^2 # value of r^2
+
+# Check the fit of the regression line
+ggplot(alldata, aes(x=Height.cms.,y=Rating.1)) +
+  geom_point() +
+  geom_line(color="red", aes(x=Height.cms., y=returnrating_predicted)) +
+  labs(x="Height (in cms)",y="Return rating",title="Fit of regression line")
+
+
 
 ## First serve % VS Service games won %
 ## Does first serve percentage matter in terms of service games won?
-cor(alldata$First_perc, alldata$Games_won_perc) # 0.03 -> no correlation
-fserve_gwonLR <- lm(alldata$Games_won_perc ~ alldata$First_perc)
+# Do the variables seem related?
+# Scatter plot of first serve against service games won
+ggplot(alldata, aes(y=Games_won_perc,x=First_perc)) +
+  geom_point() +
+  labs(y="Service games won %", x="First serve %", title="First Serve % VS Service Games Won %")
+# Correlation between variables
+cor(alldata$Games_won_perc, alldata$First_perc) # 0.03 -> close to 0 = no correlation
 
-## Can a player's region help predict if they are a server or a returner?
+# Linear regression model
+fserve_gwonLR <- lm(Games_won_perc ~ First_perc, data = alldata)
+summary(fserve_gwonLR)
+
+# The r^2 of our model is extremely low (0.0009), and 
+#the p-value of the independent variable used is
+#too high (0.746), therefore, there is no point in
+#using this model because these values tell us that
+#first serve % does not matter when predicting the %
+#of service games won
+
+
+
+## Age VS Pressure rating
+## Does age help predict pressure rating?
+
+# Do the variables seem related?
+# Scatter plot of age against pressure rating
+ggplot(alldata, aes(y=Rating.2,x=Age)) +
+  geom_point() +
+  labs(y="Pressure rating", x="Age", title="Age VS Pressure Rating")
+# Correlation between variables
+cor(alldata$Age, alldata$Rating.2) # -0.11 -> very weak negative correlation
+
+# Linear regression model
+age_pressureLR <- lm(Rating.2 ~ Age, data = alldata)
+summary(age_pressureLR)
+
+# The r^2 of our model is extremely low (0.01291), and 
+#the p-value of the independent variable used is
+#too high (0.227), therefore, there is no point in
+#using this model because these values tell us that
+#age does not matter when predicting pressure rating
+
+
+
+#### MULTIPLE LINEAR REGRESSION
+
+## How will adding more variables to our model trying
+##to predict service rating affect it?
+## Let's add the ATP ranking and return rating variables
+
+# Multi linear regression model
+serve_multiLR <- lm(Rating ~ Height.cms. + ATP_Rank + Rating.1, data = alldata)
+summary(height_serveLR)
+summary(serve_multiLR)
+
+# Original r^2 = 0.3724 -> New r^2 value = 0.5248 -> higher explanatory power
+#The new model can explain 52.48% of the variation in service rating
+# The p-value for all variables is below 0.05, so
+#we should keep all of them since they are all 
+#statistically significant (meaningful to the model)
+
+# Regression equation
+serve_multiLR 
+# Service rating = 196.1628 + 0.7386 * Height (in cms) - 0.1604 * ATP ranking - 0.4172 * Return rating
+# Taller players seem to have a better service rating,
+#on the other hand, the higher (worst) a player's ranking
+#is, the worse its serve stats seem to be, and the better
+#the player's return rating, the worse its service rating
+
+# Confidence intervals
+confint(serve_multiLR, level=0.95) # The interval has 95% chance of containing the correct bi
+confint(serve_multiLR, level=0.99) # The interval has 99% chance of containing the correct bi
+
+# Predict serve rating based on different values for the
+#independent variables
+multi_predict_vals <- data.frame(Height.cms. <- c(170, 180, 190, 200), ATP_Rank <- c(10, 40, 70, 100), Rating.1 <- c(105, 125, 145, 165))
+predict(serve_multiLR, multi_predict_vals)
+
+# What are the predicted values for the serve rating?
+serverating_predicted_multi <- fitted(serve_multiLR)
+alldata$serverating_predicted_multi <- serverating_predicted_multi
+cor(alldata$serverating_predicted_multi, alldata$Rating)
+cor(alldata$serverating_predicted_multi, alldata$Rating)^2 # value of r^2
+
 
