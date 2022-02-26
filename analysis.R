@@ -355,6 +355,7 @@ alldata %>%
 
 ## Height VS Service rating
 ## How does height affect a player's serve?
+
 # Do the variables seem related?
 # Scatter plot of height against service rating
 ggplot(alldata, aes(y=Rating, x=Height.cms.)) +
@@ -417,7 +418,7 @@ cor(alldata$serverating_predicted, alldata$Rating)^2 # value of r^2
 ggplot(alldata, aes(x=Height.cms.,y=Rating)) +
   geom_point() +
   geom_line(color="red", aes(x=Height.cms., y=serverating_predicted)) +
-  labs(title="Fit of regression line")
+  labs(x="Height (in cms)",y="Service Rating",title="Fit of regression line")
 
 
 
