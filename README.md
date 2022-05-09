@@ -1,12 +1,15 @@
 # ATP-Data-Analysis
 
-A report with detailed analysis of this project can be found in the main directory.
-
-## Technologies used / Skills gained:
-- Scrapping data with Python;
-- Designing a database from scratch;
-- Data analysis using R:
-  - Creating visualizations with ggplot2;
-  - Principal component analysis;
-  - Clustering analysis;
-  - Linear regression;
+## This project was divided in 4 stages:
+- ### Stage 1 --> Obtaining the data
+  - Scraping of data using BeautifulSoup (Python)
+- ### Stage 2 -->  Organizing the data
+  - Design and implementation of a TIDY database structure on Excel 
+- ### Stage 3 --> Analyzing the data
+  - Data analysis with R 
+    - Exploratory data analysis using ggplot2 for visualizations, and dplyr and sqldf for data transformation
+    - Data preparation for machine learning with PCA
+    - Machine learning models (clustering and regression)
+    - Final visualizations with ggplot2
+- ### Stage 4 --> Delivering the results
+  - Writing the report 
