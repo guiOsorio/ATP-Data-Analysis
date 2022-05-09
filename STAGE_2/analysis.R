@@ -7,12 +7,11 @@ library(ggplot2)
 theme_set(theme_classic())
 
 #### READ DATA
-df_pinfo <- read.csv('player_info.csv')
-df_region <- read.csv('region.csv', fileEncoding="UTF-8-BOM")
-df_serve <- read.csv('serve_stats.csv', fileEncoding="UTF-8-BOM")
-df_return <- read.csv('return_stats.csv', fileEncoding="UTF-8-BOM")
-
-df_pressure <- read.csv('pressure_stats.csv', fileEncoding="UTF-8-BOM")
+df_pinfo <- read.csv('../STAGE_1/player_info.csv', fileEncoding="UTF-8-BOM")
+df_region <- read.csv('../STAGE_1/region.csv', fileEncoding="UTF-8-BOM")
+df_serve <- read.csv('../STAGE_1/serve_stats.csv', fileEncoding="UTF-8-BOM")
+df_return <- read.csv('../STAGE_1/return_stats.csv', fileEncoding="UTF-8-BOM")
+df_pressure <- read.csv('../STAGE_1/pressure_stats.csv', fileEncoding="UTF-8-BOM")
 
 View(df_pinfo)
 View(df_region)
