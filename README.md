@@ -1,7 +1,7 @@
 # Tennis-Data-Analysis
 
 ## This project was divided in 4 stages:
-- ### Stage 1 --> Obtaining the data
+- ### Stage 1 --> Obtaining/Collecting the data
   - Scraping of data using BeautifulSoup (Python)
 - ### Stage 2 -->  Organizing the data
   - Design and implementation of a TIDY database structure on Excel 
@@ -11,5 +11,5 @@
     - Data preparation for machine learning with PCA
     - Machine learning models (clustering and regression)
     - Final visualizations with ggplot2
-- ### Stage 4 --> Delivering the results
+- ### Stage 4 --> Interpreting & Delivering the results
   - Writing the report 
