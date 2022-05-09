@@ -1,4 +1,4 @@
-# ATP-Data-Analysis
+# Tennis-Data-Analysis
 
 ## This project was divided in 4 stages:
 - ### Stage 1 --> Obtaining the data
